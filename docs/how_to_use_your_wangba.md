@@ -1,6 +1,6 @@
 ---
 title: 怎么用好你的王八来协作？
-mianfont: 霞鹜文楷
+mainfont: 霞鹜文楷
 ---
 
 最简单能工作就好，可能这个方法不太正规，但是没关系。
@@ -21,7 +21,7 @@ mianfont: 霞鹜文楷
 
 # 改
 
-在克隆下来的文件里改
+在克隆下来的文件里改。
 
 # 上传
 
@@ -29,3 +29,16 @@ mianfont: 霞鹜文楷
 
 然后`commit`完王八会让你`push`，注意这时候要`push`到一个新的分支，因为这里已经是远程分支了，看图。
 
+![set_new_branch.png](img/set_new_branch.png "set_new_branch.png")
+
+就是Ref下面哪个Remote要点一下输入一个新的分支名，这样就会推到新的分支了。
+
+看Github效果：
+
+![github_new_branch.png](img/github_new_branch.png)
+
+然后在github提pr就行了。
+
+你要再改别的可以在本地改，推到同一个分支去，pr不用重新提。
+
+如果pr已经被合并到主分支了，下次要加功能就把之前的文件夹都删了，从头看起。
