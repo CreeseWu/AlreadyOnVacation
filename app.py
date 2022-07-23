@@ -42,9 +42,16 @@ def salt():
     data = request.data
     # 解析json格式的数据
     data = json.loads(data)
+    email = data['email']
+
     # 根据Email生成Salt（注册的Email，，没有注册的Emal。。）
     # 返回Salt
-    return ""
+
+    # 成功示例：
+    return json.dumps({'enc_salt': "adsfasfasfasdfasf"})
+
+    # 失败示例
+    # return json.dumps({'errors': 'failed'}), 500
 
 
 @app.route('/api/login', methods=['POST'])
