@@ -7,7 +7,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from flask_jwt_extended import JWTManager
 import base64
 import json
-import rsa
+
 
 import re
 
@@ -39,12 +39,6 @@ def login():
     password = data['password']
     print(email, password)
     return  "错误"
-
-
-@app.route('/api/gen_rsa')
-def gen_rsa():
-    (pubkey, privkey) = rsa.newkeys(1024)
-    return str(pubkey)
 
 
 app.run(host="0.0.0.0", port=9000)
