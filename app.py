@@ -63,7 +63,8 @@ def login():
     # 如果正确 使用JWT生成一个token
     # 将生成的token使用数据库中明文存储的RSA公钥加密
     # 将加密后的Token和数据库中加密后的RSA私钥返回
-    return ""
+    api_token  = create_access_token(identity='wujie')
+    return json.dumps({'api_token': api_token})
 
 
 @app.route('/api/register', methods=['POST'])
@@ -80,6 +81,13 @@ def register():
     # 返回信息
     return ""
 
+
+@app.route('/api/verify_token', methods=['POST'])
+def verify_token():
+    data = request.data
+    data = json.loads(data)
+    api_token = data['api_token']
+    return json.dumps({'api_token': api_token})
 
 @app.route('/api/upload', methods=['POST'])
 def upload():
