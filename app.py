@@ -63,7 +63,7 @@ def login():
     # 如果正确 使用JWT生成一个token
     # 将生成的token使用数据库中明文存储的RSA公钥加密
     # 将加密后的Token和数据库中加密后的RSA私钥返回
-    api_token  = create_access_token(identity='wujie')
+    api_token = create_access_token(identity='wujie')
     return json.dumps({'api_token': api_token})
 
 
@@ -89,6 +89,7 @@ def verify_token():
     api_token = data['api_token']
     return json.dumps({'api_token': api_token})
 
+
 @app.route('/api/upload', methods=['POST'])
 def upload():
     raw = request.data
@@ -98,15 +99,12 @@ def upload():
     name = json_data['name']
     type = json_data['type']
 
-
-
-
     # 获取前端发送的文件和文件信息
     # 验证JWT
     # 检查文件信息（大小。。。
     # 存储文件和文件信息（把文件以随机的文件名存在本地，在数据库里存储原本的文件名和在本地的路径）
 
-    return json.dumps({"errors": [{"file":"file is too large"}]}),500
+    return json.dumps({"errors": [{"file": "file is too large"}]}), 500
 
 
 @app.route('/api/download/<file_id>', methods=['POST'])
@@ -122,6 +120,38 @@ def download(file_id):
 def gen_rsa():
     (pubkey, privkey) = rsa.newkeys(1024)
     return str(pubkey)
+
+
+@app.route('/api/share', methods=['POST'])
+def share():
+    json_data = json.loads(request.data)
+    share_token = create_access_token(identity=json_data, expires_delta=False)
+    # return json.dumps({'errors': {"file": ["无操作权限"]}}), 422
+    return json.dumps({"share_token": share_token})
+
+
+@app.route('/api/share_info', methods=['POST'])
+def share_info():
+    json_data = json.loads(request.data)
+    jwt = json_data['share_token']
+    idt = decode_token(jwt)["sub"]
+    created_timestamp = idt['created_timestamp'] / 1000
+    created_time = datetime.datetime.fromtimestamp(created_timestamp)
+    now_time = datetime.datetime.now()
+    expired_days = idt['expired_days']
+    time_delta = datetime.timedelta(days=expired_days)
+    expired_date = created_time + time_delta
+    if now_time > expired_date:
+        return json.dumps({'errors': {"expired": [f"分享链接已经于{expired_date.strftime('%Y-%m-%d %H:%M:%S')}过期。"]}}), 422
+
+    info = {"share_filename": idt['share_filename'],
+            "table": {
+                "share_user": idt['share_user'],
+                "description": idt['description'],
+                "expired_download_count": idt['expired_download_count'],
+                "share_rsa_pk": idt['share_rsa_pk'],
+                "share_enc_key": idt['share_enc_key']}}
+    return json.dumps(info)
 
 
 app.run(host="0.0.0.0", port=9000)
