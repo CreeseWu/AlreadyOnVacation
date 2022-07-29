@@ -91,15 +91,26 @@ def verify_token():
 
 @app.route('/api/upload', methods=['POST'])
 def upload():
+    raw = request.data
+    json_data = json.loads(raw)
+    encrypted = json_data['encrypted']
+    file_enc_key = json_data['file_enc_key']
+    name = json_data['name']
+    type = json_data['type']
+
+
+
+
     # 获取前端发送的文件和文件信息
     # 验证JWT
     # 检查文件信息（大小。。。
     # 存储文件和文件信息（把文件以随机的文件名存在本地，在数据库里存储原本的文件名和在本地的路径）
-    return ""
+
+    return json.dumps({"errors": [{"file":"file is too large"}]}),500
 
 
-@app.route('/api/download', methods=['POST'])
-def download():
+@app.route('/api/download/<file_id>', methods=['POST'])
+def download(file_id):
     # 获取前端发送的文件名
     # 验证JWT
     # 根据文件名在数据库中找到文件存储的路径
