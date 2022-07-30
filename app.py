@@ -8,6 +8,7 @@ from flask_jwt_extended import JWTManager
 import base64
 import json
 import rsa
+from flask_sqlalchemy import SQLAlchemy
 
 # 数据库建表、连接 最多
 # 注册、登录、salt 中间
@@ -15,9 +16,25 @@ import rsa
 
 app = Flask(__name__, static_folder='dist', static_url_path='/')
 app.config["SECRET_KEY"] = "wujie!"
+app.config[
+    'SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://cucpan:CUCpan12@bj-cynosdbmysql-grp-bmn58zec.sql.tencentcdb.com:20437/cucpan'
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 CORS(app, supports_credentials=True)
 api = Api(app)
 jwt = JWTManager(app)
+db = SQLAlchemy(app)
+
+
+class User(db.Model):
+    ___tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True)
+    client_random = db.Column(db.String(120))
+    master_key_enc = db.Column(db.Text)
+    derived_auth_key_hashed = db.Column(db.String(120))
+    rsa_private_key_enc = db.Column(db.Text)
+    rsa_public_key = db.Column(db.Text)
 
 
 @app.route('/', methods=['GET'])
@@ -69,17 +86,39 @@ def login():
 
 @app.route('/api/register', methods=['POST'])
 def register():
-    # 这里写注册的逻辑
-    # 先获取到前端传来的信息
-    data = request.data
     # 解析json格式的数据
-    data = json.loads(data)
+    json_data = json.loads(request.data)
 
-    # 拿到【客户端随机数、Email、加密后的主密钥、认证密钥】
-    # 检查 e.g. email是否已经注册过等
-    # 存到数据库里面
+    # 检查是否为空或未生成
+    for key in json_data:
+        if json_data[key] == '':
+            return json.dumps({'errors': {key: [key + "为空"]}}), 500
+        if "生成中" in json_data[key]:
+            return json.dumps({'errors': {key: [key + "生成失败，请使用Chrome或Safari"]}}), 500
+
+    client_random = json_data['client_random']
+    derived_auth_key_hashed = json_data['derived_auth_key_hashed']
+    email = json_data['email']
+    master_key_enc = json_data['master_key_enc']
+    rsa_private_key_enc = json_data['rsa_private_key_enc']
+    rsa_public_key = json_data['rsa_public_key']
+
+    # 检查重复注册
+    if User.query.filter_by(email=email).first():
+        return json.dumps({'errors': {"email": ["邮箱已注册，请直接登录"]}}), 400
+
+    # 将数据存入数据库
+    try:
+        user = User(email=email, client_random=client_random, master_key_enc=master_key_enc,
+                    derived_auth_key_hashed=derived_auth_key_hashed, rsa_private_key_enc=rsa_private_key_enc,
+                    rsa_public_key=rsa_public_key)
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        return json.dumps({'errors': {'db': [str(e)]}}), 500
+
     # 返回信息
-    return ""
+    return json.dumps({'success': "注册成功"})
 
 
 @app.route('/api/verify_token', methods=['POST'])
