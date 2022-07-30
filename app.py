@@ -130,16 +130,17 @@ def register():
         return json.dumps({'errors': {'db': [str(e)]}}), 500
 
     # 返回信息
-    return json.dumps({'api_token': create_access_token(email), "master_key": master_key_enc,
-                       "rsa_private_key": rsa_private_key_enc, "email": email})
+    return "注册成功"
 
 
 @app.route('/api/verify_token', methods=['POST'])
+@jwt_required()
 def verify_token():
-    data = request.data
-    data = json.loads(data)
-    api_token = data['api_token']
-    return json.dumps({'api_token': api_token})
+    # data = request.data
+    # data = json.loads(data)
+    # api_token = data['api_token']
+    # return json.dumps({'api_token': api_token})
+    return json.dumps({"identity": get_jwt_identity()})
 
 
 @app.route('/api/upload', methods=['POST'])
