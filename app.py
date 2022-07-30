@@ -77,15 +77,21 @@ def salt():
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    # 获取传过来的Email和认证密钥
-    # 将认证密钥哈希
-    # 从数据库里找存的值，和哈希后的认证密钥对比
-    # 如果错误 返回错误
-    # 如果正确 使用JWT生成一个token
-    # 将生成的token使用数据库中明文存储的RSA公钥加密
-    # 将加密后的Token和数据库中加密后的RSA私钥返回
-    api_token = create_access_token(identity='wujie')
-    return json.dumps({'api_token': api_token})
+    json_data = json.loads(request.data)
+    password = json_data['password']
+    md5_password = hashlib.md5(password.encode()).hexdigest()
+    user_in_db = User.query.filter_by(email=json_data['email']).first()
+    if user_in_db:
+        auth_key_in_db = user_in_db.derived_auth_key_hashed
+    else:
+        auth_key_in_db = ""
+
+    # 比对密码
+    if md5_password == auth_key_in_db:
+        api_token = create_access_token(identity='wujie')
+        return json.dumps({'api_token': api_token, "master_key": user_in_db.master_key_enc})
+    else:
+        return json.dumps({'errors': {"password": ["密码错误"]}}), 400
 
 
 @app.route('/api/register', methods=['POST'])
