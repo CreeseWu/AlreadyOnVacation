@@ -1,4 +1,6 @@
 import datetime
+import hashlib
+
 from flask import Flask
 from flask_restful import reqparse, abort, Api, Resource, request
 from flask_cors import *
@@ -56,19 +58,21 @@ def server_time():
 @app.route('/api/salt', methods=['POST'])
 def salt():
     # 先获取到前端传来的信息
-    data = request.data
-    # 解析json格式的数据
-    data = json.loads(data)
+    data = json.loads(request.data)
     email = data['email']
 
-    # 根据Email生成Salt（注册的Email，，没有注册的Emal。。）
-    # 返回Salt
+    # 检查是否已经注册
+    user = User.query.filter_by(email=email).first()
+    random = user.client_random if user else "server_random_here_server_random"  # 没有注册使用服务器随机数
 
-    # 成功示例：
-    return json.dumps({'enc_salt': "adsfasfasfasdfasf"})
+    # padding
+    salt = email + random
+    while (len(salt) < 64):
+        salt += "w"
+    # sha256 和前端一致
+    salt = hashlib.sha256(salt.encode()).hexdigest()
 
-    # 失败示例
-    # return json.dumps({'errors': 'failed'}), 500
+    return json.dumps({'enc_salt': salt})
 
 
 @app.route('/api/login', methods=['POST'])
