@@ -79,8 +79,9 @@ def salt():
 def login():
     json_data = json.loads(request.data)
     password = json_data['password']
+    email = json_data['email']
     md5_password = hashlib.md5(password.encode()).hexdigest()
-    user_in_db = User.query.filter_by(email=json_data['email']).first()
+    user_in_db = User.query.filter_by(email=email).first()
     if user_in_db:
         auth_key_in_db = user_in_db.derived_auth_key_hashed
     else:
@@ -89,7 +90,8 @@ def login():
     # 比对密码
     if md5_password == auth_key_in_db:
         api_token = create_access_token(identity=user_in_db.email)
-        return json.dumps({'api_token': api_token, "master_key": user_in_db.master_key_enc})
+        return json.dumps({'api_token': api_token, "master_key": user_in_db.master_key_enc,
+                           "rsa_private_key": user_in_db.rsa_private_key_enc, "email": user_in_db.email})
     else:
         return json.dumps({'errors': {"password": ["密码错误"]}}), 400
 
@@ -128,7 +130,8 @@ def register():
         return json.dumps({'errors': {'db': [str(e)]}}), 500
 
     # 返回信息
-    return json.dumps({'success': "注册成功"})
+    return json.dumps({'api_token': create_access_token(email), "master_key": master_key_enc,
+                       "rsa_private_key": rsa_private_key_enc, "email": email})
 
 
 @app.route('/api/verify_token', methods=['POST'])
