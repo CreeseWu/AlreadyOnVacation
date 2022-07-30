@@ -88,7 +88,7 @@ def login():
 
     # 比对密码
     if md5_password == auth_key_in_db:
-        api_token = create_access_token(identity='wujie')
+        api_token = create_access_token(identity=user_in_db.email)
         return json.dumps({'api_token': api_token, "master_key": user_in_db.master_key_enc})
     else:
         return json.dumps({'errors': {"password": ["密码错误"]}}), 400
