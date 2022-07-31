@@ -9,8 +9,9 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from flask_jwt_extended import JWTManager
 import base64
 import json
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
+# from Crypto.PublicKey import RSA
+# from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
+import rsa
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 
@@ -102,8 +103,11 @@ def login():
     # 比对密码
     if md5_password == auth_key_in_db:
         api_token = create_access_token(identity=user_in_db.user_id)
-        cipher = Cipher_pkcs1_v1_5.new(RSA.importKey(user_in_db.rsa_public_key))
-        api_token = cipher.encrypt(bytes(api_token, encoding="utf8"))
+        rsa_public_key = user_in_db.rsa_public_key
+        rsa_public_key = rsa.PublicKey.load_pkcs1_openssl_pem(rsa_public_key.encode("utf-8"))
+        api_token=rsa.encrypt(bytes(api_token, encoding="utf8"), rsa_public_key)
+        # cipher = Cipher_pkcs1_v1_5.new(RSA.importKey(user_in_db.rsa_public_key))
+        # api_token = cipher.encrypt(bytes(api_token, encoding="utf8"))
         api_token = base64.b64encode(api_token).decode()
         return json.dumps({'api_token': api_token, "master_key": user_in_db.master_key_enc,
                            "rsa_private_key": user_in_db.rsa_private_key_enc,
