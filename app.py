@@ -51,6 +51,16 @@ class File(db.Model):
     file_enc_key = db.Column(db.TEXT)
     content = db.Column(MEDIUMTEXT)
 
+    def to_json(self):
+        return {
+            'file_id': self.file_id,
+            'user': self.user,
+            'name': self.name,
+            'type': self.type,
+            'file_enc_key': self.file_enc_key,
+            'content': self.content
+        }
+
 
 @app.route('/', methods=['GET'])
 def index():
@@ -105,7 +115,7 @@ def login():
         api_token = create_access_token(identity=user_in_db.user_id)
         rsa_public_key = user_in_db.rsa_public_key
         rsa_public_key = rsa.PublicKey.load_pkcs1_openssl_pem(rsa_public_key.encode("utf-8"))
-        api_token=rsa.encrypt(bytes(api_token, encoding="utf8"), rsa_public_key)
+        api_token = rsa.encrypt(bytes(api_token, encoding="utf8"), rsa_public_key)
         # cipher = Cipher_pkcs1_v1_5.new(RSA.importKey(user_in_db.rsa_public_key))
         # api_token = cipher.encrypt(bytes(api_token, encoding="utf8"))
         api_token = base64.b64encode(api_token).decode()
@@ -229,6 +239,14 @@ def share_info():
                 "share_rsa_pk": idt['share_rsa_pk'],
                 "share_enc_key": idt['share_enc_key']}}
     return json.dumps(info)
+
+
+@app.route('/api/files/', methods=['GET'])
+@jwt_required()
+def files():
+    user = get_jwt_identity()
+    files = File.query.filter_by(user=user).all()
+    return json.dumps([file.to_json() for file in files])
 
 
 app.run(host="0.0.0.0", port=9000)
