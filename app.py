@@ -9,7 +9,8 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from flask_jwt_extended import JWTManager
 import base64
 import json
-import rsa
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
 from flask_sqlalchemy import SQLAlchemy
 
 # 数据库建表、连接 最多
@@ -30,13 +31,20 @@ db = SQLAlchemy(app)
 
 class User(db.Model):
     ___tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True)
     client_random = db.Column(db.String(120))
     master_key_enc = db.Column(db.Text)
     derived_auth_key_hashed = db.Column(db.String(120))
     rsa_private_key_enc = db.Column(db.Text)
     rsa_public_key = db.Column(db.Text)
+
+
+class file(db.Model):
+    ___tablename__ = 'user'
+    file_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
+    content = db.Column(db.BINARY)
 
 
 @app.route('/', methods=['GET'])
@@ -53,8 +61,6 @@ def server_time():
     return html
 
 
-# 总体写的时候要看表格和老师的要求
-
 @app.route('/api/salt', methods=['POST'])
 def salt():
     # 先获取到前端传来的信息
@@ -66,17 +72,19 @@ def salt():
     random = user.client_random if user else "server_random_here_server_random"  # 没有注册使用服务器随机数
 
     # padding
-    salt = email + random
-    while (len(salt) < 64):
-        salt += "w"
+    enc_salt = email + random
+    while len(enc_salt) < 64:
+        enc_salt += "w"
     # sha256 和前端一致
-    salt = hashlib.sha256(salt.encode()).hexdigest()
+    enc_salt = hashlib.sha256(enc_salt.encode()).hexdigest()
 
-    return json.dumps({'enc_salt': salt})
+    return json.dumps({'enc_salt': enc_salt})
 
 
 @app.route('/api/login', methods=['POST'])
 def login():
+    # db.drop_all()
+    # db.create_all()
     json_data = json.loads(request.data)
     password = json_data['password']
     email = json_data['email']
@@ -90,8 +98,12 @@ def login():
     # 比对密码
     if md5_password == auth_key_in_db:
         api_token = create_access_token(identity=user_in_db.email)
+        cipher = Cipher_pkcs1_v1_5.new(RSA.importKey(user_in_db.rsa_public_key))
+        api_token = cipher.encrypt(bytes(api_token, encoding="utf8"))
+        api_token = base64.b64encode(api_token).decode()
         return json.dumps({'api_token': api_token, "master_key": user_in_db.master_key_enc,
-                           "rsa_private_key": user_in_db.rsa_private_key_enc, "email": user_in_db.email})
+                           "rsa_private_key": user_in_db.rsa_private_key_enc,
+                           "email": user_in_db.email})
     else:
         return json.dumps({'errors': {"password": ["密码错误"]}}), 400
 
@@ -167,12 +179,6 @@ def download(file_id):
     # 根据文件名在数据库中找到文件存储的路径
     # 返回文件
     return ""
-
-
-@app.route('/api/gen_rsa')
-def gen_rsa():
-    (pubkey, privkey) = rsa.newkeys(1024)
-    return str(pubkey)
 
 
 @app.route('/api/share', methods=['POST'])
