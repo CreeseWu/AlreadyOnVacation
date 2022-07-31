@@ -12,6 +12,7 @@ import json
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 
 # 数据库建表、连接 最多
 # 注册、登录、salt 中间
@@ -40,11 +41,14 @@ class User(db.Model):
     rsa_public_key = db.Column(db.Text)
 
 
-class file(db.Model):
+class File(db.Model):
     ___tablename__ = 'user'
     file_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer)
-    content = db.Column(db.BINARY)
+    user = db.Column(db.Integer)
+    name = db.Column(db.String(120))
+    type = db.Column(db.String(120))
+    file_enc_key = db.Column(db.TEXT)
+    content = db.Column(MEDIUMTEXT)
 
 
 @app.route('/', methods=['GET'])
@@ -97,7 +101,7 @@ def login():
 
     # 比对密码
     if md5_password == auth_key_in_db:
-        api_token = create_access_token(identity=user_in_db.email)
+        api_token = create_access_token(identity=user_in_db.user_id)
         cipher = Cipher_pkcs1_v1_5.new(RSA.importKey(user_in_db.rsa_public_key))
         api_token = cipher.encrypt(bytes(api_token, encoding="utf8"))
         api_token = base64.b64encode(api_token).decode()
@@ -156,20 +160,30 @@ def verify_token():
 
 
 @app.route('/api/upload', methods=['POST'])
+@jwt_required()
 def upload():
+    db.create_all()
     raw = request.data
     json_data = json.loads(raw)
     encrypted = json_data['encrypted']
-    file_enc_key = json_data['file_enc_key']
+    file_enc_key = json_data['file_key']
     name = json_data['name']
     type = json_data['type']
 
-    # 获取前端发送的文件和文件信息
-    # 验证JWT
-    # 检查文件信息（大小。。。
-    # 存储文件和文件信息（把文件以随机的文件名存在本地，在数据库里存储原本的文件名和在本地的路径）
+    # 判断encrypted大小是否大于15M
+    if (len(encrypted) > 15 * 1024 * 1024):
+        return json.dumps({"errors": [{"file": "文件过大"}]}), 500
 
-    return json.dumps({"errors": [{"file": "file is too large"}]}), 500
+    # 存储至数据库
+    try:
+        file = File(name=name, type=type, content=encrypted,
+                    file_enc_key=file_enc_key, user=get_jwt_identity())
+        db.session.add(file)
+        db.session.commit()
+    except Exception as e:
+        return json.dumps({"errors": [{"db": ["数据库错误", str(e)]}]}), 500
+
+    return "上传成功"
 
 
 @app.route('/api/download/<file_id>', methods=['POST'])
