@@ -50,7 +50,8 @@ class File(db.Model):
     type = db.Column(db.String(120))
     uuid = db.Column(db.String(120))
     size_mb = db.Column(db.FLOAT)
-    file_sha256 = db.Column(db.String(120))
+
+    # file_sha256 = db.Column(db.String(120))
 
     def to_json(self):
         return {
@@ -75,6 +76,13 @@ class FileContent(db.Model):
             'file_enc_key': self.file_enc_key,
             'content': self.content
         }
+
+
+class ShareInfo(db.Model):
+    share_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
+    file_id = db.Column(db.Integer)
+    download_count = db.Column(db.Integer)
 
 
 @app.route('/', methods=['GET'])
@@ -113,8 +121,6 @@ def salt():
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    # db.drop_all()
-    # db.create_all()
     json_data = json.loads(request.data)
     password = json_data['password']
     email = json_data['email']
@@ -191,14 +197,13 @@ def verify_token():
 @app.route('/api/upload', methods=['POST'])
 @jwt_required()
 def upload():
-    db.create_all()
     raw = request.data
     json_data = json.loads(raw)
     encrypted = json_data['encrypted']
     file_enc_key = json_data['file_key']
     name = json_data['name']
     type = json_data['type']
-    file_sha256 = json_data['file_sha256']
+    # file_sha256 = json_data['file_sha256']
     size_mb = len(encrypted) / 1024 / 1024
 
     # 判断encrypted大小是否大于15M
@@ -208,7 +213,7 @@ def upload():
     # 存储至数据库
     try:
         uuid = str(uuid4())
-        file = File(name=name, type=type, size_mb=size_mb, file_sha256=file_sha256,
+        file = File(name=name, type=type, size_mb=size_mb,
                     uuid=uuid, user=get_jwt_identity())
         db.session.add(file)
         file_content = FileContent(uuid=uuid, content=encrypted, file_enc_key=file_enc_key)
@@ -241,10 +246,26 @@ def download():
 
 
 @app.route('/api/share', methods=['POST'])
+@jwt_required()
 def share():
+    db.create_all()
     json_data = json.loads(request.data)
     share_token = create_access_token(identity=json_data, expires_delta=False)
-    # return json.dumps({'errors': {"file": ["无操作权限"]}}), 422
+    # 是否有文件权限
+    share_file_id = json_data['share_file_id']
+    file = File.query.filter_by(file_id=share_file_id).first()
+    if not file:
+        return json.dumps({'errors': {"file": ["文件不存在"]}}), 500
+    if file.user != get_jwt_identity():
+        return json.dumps({'errors': {"file": ["无操作权限"]}}), 422
+
+    expired_download_count = int(json_data['expired_download_count'])
+
+    share_info = ShareInfo(user_id=get_jwt_identity(), file_id=share_file_id,
+                           download_count=expired_download_count)
+    db.session.add(share_info)
+    db.session.commit()
+
     return json.dumps({"share_token": share_token})
 
 
