@@ -250,6 +250,7 @@ def download():
 def share():
     db.create_all()
     json_data = json.loads(request.data)
+    json_data["share_user"] = User.query.filter_by(user_id=get_jwt_identity()).first().email
     share_token = create_access_token(identity=json_data, expires_delta=False)
     # 是否有文件权限
     share_file_id = json_data['share_file_id']
@@ -274,6 +275,8 @@ def share_info():
     json_data = json.loads(request.data)
     jwt = json_data['share_token']
     idt = decode_token(jwt)["sub"]
+
+    # 判断时间是否过期
     created_timestamp = idt['created_timestamp'] / 1000
     created_time = datetime.datetime.fromtimestamp(created_timestamp)
     now_time = datetime.datetime.now()
@@ -283,14 +286,41 @@ def share_info():
     if now_time > expired_date:
         return json.dumps({'errors': {"expired": [f"分享链接已经于{expired_date.strftime('%Y-%m-%d %H:%M:%S')}过期。"]}}), 422
 
-    info = {"share_filename": idt['share_filename'],
-            "table": {
-                "share_user": idt['share_user'],
-                "description": idt['description'],
-                "expired_download_count": idt['expired_download_count'],
-                "share_rsa_pk": idt['share_rsa_pk'],
-                "share_enc_key": idt['share_enc_key']}}
-    return json.dumps(info)
+    #加入公钥
+    if idt['share_rsa_pk']:
+        idt['rsa_public_key'] = User.query.filter_by(email=idt["share_user"]).first().rsa_public_key
+
+    idt['share_file_id'] = create_access_token(identity=idt['share_file_id'])
+    return json.dumps(idt)
+
+
+@app.route('/api/share_download', methods=['POST'])
+def share_download():
+
+    json_data = json.loads(request.data)
+    file_id = json_data['id']
+    file_id = decode_token(file_id)['sub']
+
+    # 判断文件是否被分享
+    share_file = ShareInfo.query.filter_by(file_id=file_id).first()
+    if not share_file:
+        return json.dumps({'errors': {"file": ["文件未被分享"]}}), 500
+
+    # 判断文件是否存在
+    file = File.query.filter_by(file_id=file_id).first()
+    if not file:
+        return json.dumps({'errors': {"file": ["文件不存在"]}}), 500
+
+    # 判断是否达到下载次数
+    if share_file.download_count == 0:
+        return json.dumps({'errors': {"file": ["已经达到下载次数，不可下载"]}}), 500
+    else:
+        share_file.download_count -= 1
+        db.session.commit()
+
+    # 获取文件内容
+    file_content = FileContent.query.filter_by(uuid=file.uuid).first()
+    return json.dumps({"content": file_content.to_json()["content"]})
 
 
 @app.route('/api/files/', methods=['GET'])
