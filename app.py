@@ -292,13 +292,13 @@ def share_info():
     if now_time > expired_date:
         return json.dumps({'errors': {"expired": [f"分享链接已经于{expired_date.strftime('%Y-%m-%d %H:%M:%S')}过期。"]}}), 422
 
+    share_user = User.query.filter_by(email=idt["share_user"]).first()
     # 加入公钥
     if idt['share_rsa_pk']:
-        idt['rsa_public_key'] = User.query.filter_by(email=idt["share_user"]).first().rsa_public_key
+        idt['rsa_public_key'] = share_user.rsa_public_key
 
-    user_id = User.query.filter_by(user_id=get_jwt_identity()).first().user_id
     # 加入剩余下载次数
-    idt["count_left"] = ShareInfo.query.filter_by(user_id=user_id,
+    idt["count_left"] = ShareInfo.query.filter_by(user_id=share_user.user_id,
                                                   file_id=idt["share_file_id"]).first().download_count
     idt['share_file_id'] = create_access_token(identity=idt['share_file_id'])
     return json.dumps(idt)
