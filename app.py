@@ -299,7 +299,7 @@ def share_info():
         idt['rsa_public_key'] = User.query.filter_by(email=idt["share_user"]).first().rsa_public_key
 
     # 加入剩余下载次数
-    idt["count_left"] = ShareInfo.query.filter_by(user_id=idt["share_user"],
+    idt["count_left"] = ShareInfo.query.filter_by(user_id=get_jwt_identity(),
                                                   file_id=idt["share_file_id"]).first().download_count
     idt['share_file_id'] = create_access_token(identity=idt['share_file_id'])
     return json.dumps(idt)
