@@ -260,6 +260,14 @@ def share():
     if file.user != get_jwt_identity():
         return json.dumps({'errors': {"file": ["无操作权限"]}}), 422
 
+    #若已分享，删除之前的
+    share_info = ShareInfo.query.filter_by(user_id=get_jwt_identity(),
+                                                  file_id=share_file_id).first()
+    if share_info:
+        db.session.delete(share_info)
+
+
+
     expired_download_count = int(json_data['expired_download_count'])
 
     share_info = ShareInfo(user_id=get_jwt_identity(), file_id=share_file_id,
@@ -286,17 +294,19 @@ def share_info():
     if now_time > expired_date:
         return json.dumps({'errors': {"expired": [f"分享链接已经于{expired_date.strftime('%Y-%m-%d %H:%M:%S')}过期。"]}}), 422
 
-    #加入公钥
+    # 加入公钥
     if idt['share_rsa_pk']:
         idt['rsa_public_key'] = User.query.filter_by(email=idt["share_user"]).first().rsa_public_key
 
+    # 加入剩余下载次数
+    idt["count_left"] = ShareInfo.query.filter_by(user_id=idt["share_user"],
+                                                  file_id=idt["share_file_id"]).first().download_count
     idt['share_file_id'] = create_access_token(identity=idt['share_file_id'])
     return json.dumps(idt)
 
 
 @app.route('/api/share_download', methods=['POST'])
 def share_download():
-
     json_data = json.loads(request.data)
     file_id = json_data['id']
     file_id = decode_token(file_id)['sub']
