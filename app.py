@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+from uuid import uuid4
 
 from flask import Flask
 from flask_restful import reqparse, abort, Api, Resource, request
@@ -43,13 +44,13 @@ class User(db.Model):
 
 
 class File(db.Model):
-    ___tablename__ = 'user'
     file_id = db.Column(db.Integer, primary_key=True)
     user = db.Column(db.Integer)
     name = db.Column(db.String(120))
     type = db.Column(db.String(120))
-    file_enc_key = db.Column(db.TEXT)
-    content = db.Column(MEDIUMTEXT)
+    uuid = db.Column(db.String(120))
+    size_mb = db.Column(db.FLOAT)
+    file_sha256 = db.Column(db.String(120))
 
     def to_json(self):
         return {
@@ -57,6 +58,20 @@ class File(db.Model):
             'user': self.user,
             'name': self.name,
             'type': self.type,
+            'uuid': self.uuid,
+            'size_mb': f"{round(self.size_mb, 2)} MB" if round(self.size_mb,
+                                                               2) != 0 else f"{round(self.size_mb * 1024, 2)} KB"
+        }
+
+
+class FileContent(db.Model):
+    uuid = db.Column(db.String(120), primary_key=True)
+    file_enc_key = db.Column(db.TEXT)
+    content = db.Column(MEDIUMTEXT)
+
+    def to_json(self):
+        return {
+            'uuid': self.uuid,
             'file_enc_key': self.file_enc_key,
             'content': self.content
         }
@@ -183,16 +198,21 @@ def upload():
     file_enc_key = json_data['file_key']
     name = json_data['name']
     type = json_data['type']
+    file_sha256 = json_data['file_sha256']
+    size_mb = len(encrypted) / 1024 / 1024
 
     # 判断encrypted大小是否大于15M
-    if (len(encrypted) > 15 * 1024 * 1024):
+    if (size_mb > 15):
         return json.dumps({"errors": [{"file": "文件过大"}]}), 500
 
     # 存储至数据库
     try:
-        file = File(name=name, type=type, content=encrypted,
-                    file_enc_key=file_enc_key, user=get_jwt_identity())
+        uuid = str(uuid4())
+        file = File(name=name, type=type, size_mb=size_mb, file_sha256=file_sha256,
+                    uuid=uuid, user=get_jwt_identity())
         db.session.add(file)
+        file_content = FileContent(uuid=uuid, content=encrypted, file_enc_key=file_enc_key)
+        db.session.add(file_content)
         db.session.commit()
     except Exception as e:
         return json.dumps({"errors": [{"db": ["数据库错误", str(e)]}]}), 500
@@ -200,13 +220,24 @@ def upload():
     return "上传成功"
 
 
-@app.route('/api/download/<file_id>', methods=['POST'])
-def download(file_id):
-    # 获取前端发送的文件名
-    # 验证JWT
-    # 根据文件名在数据库中找到文件存储的路径
-    # 返回文件
-    return ""
+@app.route('/api/download', methods=['POST'])
+@jwt_required()
+def download():
+    json_data = json.loads(request.data)
+    file_id = json_data['id']
+
+    # 判断文件是否存在
+    file = File.query.filter_by(file_id=file_id).first()
+    if not file:
+        return json.dumps({'errors': {file: ["文件不存在"]}}), 500
+
+    # 判断文件是否属于该用户
+    if file.user != get_jwt_identity():
+        return json.dumps({'errors': {file: ["无下载权限"]}}), 500
+
+    # 获取文件内容
+    file_content = FileContent.query.filter_by(uuid=file.uuid).first()
+    return json.dumps(file_content.to_json())
 
 
 @app.route('/api/share', methods=['POST'])
