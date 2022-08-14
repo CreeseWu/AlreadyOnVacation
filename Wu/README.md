@@ -91,7 +91,7 @@
 2. 签名：在用户分享文件时。
     - 发起分享→下载加密后文件→取哈希值→下载加密后私钥→使用主密钥解密私钥→使用私钥加密哈希值（签名）
 
-<img src="rsa_sign_ui.png" height="500px">
+<div align=center><img src="rsa_sign_ui.png" height="500px"></div>
 
 
 ```typescript
@@ -113,7 +113,7 @@
     - 下载加密后文件→下载分享者公钥→使用公钥解密（验签）→显示验证状态→解密文件
 
 
-<img src="rsa_sign_ver.png" height="500px">
+<div align=center><img src="rsa_sign_ver.png" height="500px" ></div>
 
 
 
