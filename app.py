@@ -2,10 +2,8 @@ import datetime
 import hashlib
 from uuid import uuid4
 
-from flask import Flask
-from flask_restful import reqparse, abort, Api, Resource, request
+from flask import Flask,request
 from flask_cors import *
-import os
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, decode_token
 from flask_jwt_extended import JWTManager
 import base64
@@ -27,7 +25,6 @@ app.config[
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 CORS(app, supports_credentials=True)
-api = Api(app)
 jwt = JWTManager(app)
 db = SQLAlchemy(app)
 
