@@ -1,3 +1,5 @@
+<br><br>
+
 <div align="center">  <img alt="Logo"  height="80" src="logo.svg"> <br> <br>
 
 </div>
@@ -59,7 +61,7 @@
 ## 依赖环境安装补充说明
 
 - 相关依赖在`requirements.txt`文件中，可以通过命令：`pip install -r requirements.txt`安装。
-- 数据库账号密码写在`app.py`文件中，需进行更改，数据库表结构在`cucpan.sql`中
+- 数据库账号密码写在`app.py`文件中，可进行更改，数据库表结构在`cucpan.sql`中
 
 
 
