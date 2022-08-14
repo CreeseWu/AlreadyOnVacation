@@ -1,4 +1,4 @@
-<div align="center">  <img alt="Logo" width="200" height="200" src="logo.svg"> <br> <br>
+<div align="center">  <img alt="Logo"  height="200" src="logo.svg"> <br> <br>
 
 </div>
 
