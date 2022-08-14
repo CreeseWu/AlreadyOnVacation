@@ -1,14 +1,13 @@
-# 中传放心传
+<div align="center">  <img alt="Logo" width="200" height="200" src="logo.svg"> <br> <br>
+
+</div>
+
 
 ## 项目介绍
 
 本项目是直接放假组在 [中国传媒大学密码学应用实践课程](https://c4pr1c3.github.io/cuc-wiki/ac.html) 的结课作业。
 
-本分支的源码实时部署至：[https://pan.neixiangde.ren/](https://pan.neixiangde.ren/)
 
-本地运行方式：`python3 app.py`
-
-将依赖一起提交是为了serverless部署
 
 ## 功能清单
 
@@ -40,16 +39,30 @@
 
 ## 本项目用到的关键技术
 
-这里、、
+- 对称加密：AES
+- 非对称加密：RSA
+- 数字签名：SHA256withRSA
+- 前端：Vue.js 3.0
+- 后端：Flask
+- 数据库：MySQL
 
 ## 快速上手体验
 
-打开浏览器访问：https://pan.neixiangde.ren/即可快速体验系统所有功能。
+### DEMO
+
+打开浏览器访问：[https://pan.neixiangde.ren/](https://pan.neixiangde.ren/)即可快速体验系统所有功能。
+
+### 本地运行
+
+本地运行方式：`python3 app.py`
 
 ## 依赖环境安装补充说明
+
+- 相关依赖在`requirements.txt`文件中，可以通过命令：`pip install -r requirements.txt`安装。
+- 数据库账号密码写在`app.py`文件中，需进行更改，数据库表结构在`cucpan.sql`中
 
 
 
 ## 演示
 
-演示视频
+[Bilibili](https://www.bilibili.com/video/BV1eG41187mD/)
