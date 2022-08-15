@@ -2,7 +2,7 @@
 
 ### 一、具体工作内容
 
-##### 1. 分享者发起分享请求，设定分享参数
+#### 1. 分享者发起分享请求，设定分享参数
 
 **参数处理方法：**
 
@@ -21,7 +21,7 @@
     | file_id        | Integer | False       | False  | True        |
     | download_count | Integer | False       | False  | False       |
 
-##### 2. 后端检查分享权限，检查参数是否合理
+#### 2. 后端检查分享权限，检查参数是否合理
 
 - 检查文件是否存在。
 
@@ -39,7 +39,7 @@
           return json.dumps({'errors': {"file": ["无操作权限"]}}), 422
   ```
 
-##### 3. 将分享者发送的 json 使用 jwt 签名后，作为分享口令下发前端
+#### 3. 将分享者发送的 json 使用 jwt 签名后，作为分享口令下发前端
 
 - 主要在 `/api/share` 接口中实现。
 
@@ -63,7 +63,7 @@
    return json.dumps({"share_token": share_token})
   ```
 
-##### 4. 前端展示 url 下载时的步骤
+#### 4. 前端展示 url 下载时的步骤
 
 - 主要在 `/api/share_info` 接口中实现。
 
@@ -118,7 +118,7 @@
   return json.dumps(idt)
   ```
 
-##### 5. 返回文件信息
+#### 5. 返回文件信息
 
 - 主要在 `/api/share_download` 接口中实现。
 
@@ -159,9 +159,7 @@
   return json.dumps({"content": file_content.to_json()["content"]})
   ```
 
-##### 6. 若分享者设定明文分享，则信息中包含加密密钥，使用该密钥解密出文件
-
-
+#### 6. 若分享者设定明文分享，则信息中包含加密密钥，使用该密钥解密出文件
 
 ### 二、实验中遇到的问题及解决方法
 
@@ -172,8 +170,6 @@
 | 分享者可能伪造分享信息      | 分享者信息通过JWT获取，不通过前端传入的JSON |
 | 可能导致分享被枚举        | 将文件ID加密，符合下载条件时下发，设定过期时间  |
 
-
-
 ### 三、参考资料
 
 - [JSON Web Token 入门教程- 阮一峰的网络日志](https://www.ruanyifeng.com/blog/2018/07/json_web_token-tutorial.html)
@@ -181,6 +177,7 @@
 - [python.ReportClient.ShareInfo - ManageEngine](https://www.manageengine.com/analytics-plus/api/python/python.ReportClient.ShareInfo-class.html)
 - [ SQLAlchemy create_all() does not create tables - Stack Overflow](https://stackoverflow.com/questions/20744277/sqlalchemy-create-all-does-not-create-tables)
 - [Using the Session — SQLAlchemy 1.4 Documentation](https://docs.sqlalchemy.org/14/orm/session.html)
-- 
+
+
 
 
