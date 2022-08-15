@@ -127,32 +127,16 @@ SvJCj4bxncVquyNswnZJyHkCAwEAAQ==
 
 ### 四、印象深刻的bug 和解决方法
 
-①JS无法生成安全随机数
+| 问题                              | 解决办法                                   |
+| --------------------------------- | ------------------------------------------ |
+| ①JS无法生成安全随机数             | 使用现代浏览器crypto.getRandomValues()方法 |
+| ②使用crypto库前后端加密结果不一致 | 改用CryptoJS库                             |
+| ③加密时运算时间过长导致页面卡死   | 使用Vuex的Action异步操作                   |
+| ④前一步页面数据切换页面时丢失     | 使用Vuex状态管理                           |
 
-解决办法：使用现代浏览器crypto.getRandomValues()方法
+### 五、参考链接
 
-参考链接：[(41条消息) JS 安全随机数 window.crypto及其兼容性_柚子君.的博客-CSDN博客_window.crypto](https://blog.csdn.net/gengkui9897/article/details/106344417)
-
-
-
-②使用crypto库前后端加密结果不一致
-
-解决办法：改用CryptoJS库
-
-参考链接：[前端加密JS库--CryptoJS 使用指南 - Tommy_marc - 博客园 (cnblogs.com)](https://www.cnblogs.com/tommymarc/p/13187435.html)
-
-
-
-③加密时运算时间过长导致页面卡死
-
-解决办法：使用Vuex的Action异步操作
-
-参考链接：[(41条消息) Vuex Action异步操作_每一天，每一步的博客-CSDN博客_vuex 异步](https://blog.csdn.net/u010234868/article/details/120655284)
-
-
-
-④前一步页面数据切换页面时丢失
-
-解决办法：使用Vuex状态管理
-
-解决方法：[(41条消息) vue3 关于使用vuex做状态管理，页面刷新后数据丢失解决办法_听说这有个小白的博客-CSDN博客_vuex刷新数据丢失原因](https://blog.csdn.net/weixin_46466247/article/details/117129804)
+- [(41条消息) JS 安全随机数 window.crypto及其兼容性_柚子君.的博客-CSDN博客_window.crypto](https://blog.csdn.net/gengkui9897/article/details/106344417)
+- [前端加密JS库--CryptoJS 使用指南 - Tommy_marc - 博客园 (cnblogs.com)](https://www.cnblogs.com/tommymarc/p/13187435.html)
+- [(41条消息) Vuex Action异步操作_每一天，每一步的博客-CSDN博客_vuex 异步](https://blog.csdn.net/u010234868/article/details/120655284)
+- [(41条消息) vue3 关于使用vuex做状态管理，页面刷新后数据丢失解决办法_听说这有个小白的博客-CSDN博客_vuex刷新数据丢失原因](https://blog.csdn.net/weixin_46466247/article/details/117129804)
