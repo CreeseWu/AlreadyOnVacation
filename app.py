@@ -191,7 +191,8 @@ def verify_token():
     # data = json.loads(data)
     # api_token = data['api_token']
     # return json.dumps({'api_token': api_token})
-    return json.dumps({"identity": get_jwt_identity()})
+    id = get_jwt_identity()
+    return json.dumps({"identity": id, 'api_token': create_access_token(identity=id)})
 
 
 @app.route('/api/upload', methods=['POST'])
@@ -290,7 +291,8 @@ def share_info():
     time_delta = datetime.timedelta(days=expired_days)
     expired_date = created_time + time_delta
     if now_time > expired_date:
-        return json.dumps({'errors': {"expired": [f"分享链接已经于{expired_date.strftime('%Y-%m-%d %H:%M:%S')}过期。"]}}), 422
+        return json.dumps(
+            {'errors': {"expired": [f"分享链接已经于{expired_date.strftime('%Y-%m-%d %H:%M:%S')}过期。"]}}), 422
 
     share_user = User.query.filter_by(email=idt["share_user"]).first()
     # 加入公钥
