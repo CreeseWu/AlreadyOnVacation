@@ -192,7 +192,7 @@ def verify_token():
     # api_token = data['api_token']
     # return json.dumps({'api_token': api_token})
     id = get_jwt_identity()
-    return json.dumps({"identity": id, 'api_token': create_access_token(identity=id)})
+    return json.dumps({"identity": str(id), 'api_token': create_access_token(identity=idZ)})
 
 
 @app.route('/api/upload', methods=['POST'])
